@@ -42,88 +42,150 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.item.name),
+        title: Text(widget.item.name,
+            style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: Icon(Icons.delete),
-            onPressed: () {
-              _deleteItem();
-            },
-          )
+            icon: Icon(Icons.delete, color: Colors.redAccent),
+            onPressed: () => showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: Text('Konfirmasi Hapus'),
+                content: Text('Apakah Anda yakin ingin menghapus item ini?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Batal'),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      _deleteItem();
+                      Navigator.pop(context);
+                    },
+                    child: Text('Hapus', style: TextStyle(color: Colors.red)),
+                  ),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Informasi detail barang
-          ListTile(
-            title: Text(widget.item.name,
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            subtitle: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Deskripsi: ${widget.item.description}'),
-                Text('Kategori: ${widget.item.category}'),
-                Text('Harga: Rp ${widget.item.price}'),
-                Text('Stok: ${widget.item.stock}'),
-              ],
-            ),
-            isThreeLine: true,
-          ),
-          SizedBox(height: 10),
-          Center(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) =>
-                        AddTransactionScreen(item: widget.item),
-                  ),
-                ).then((_) {
-                  _loadTransactions(); 
-                });
-              },
-              child: Text('Tambah Riwayat Transaksi'),
-            ),
-          ),
-          SizedBox(height: 10),
-          Divider(),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Text(
-              'Riwayat Transaksi',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-          ),
-          Expanded(
-            child: _transactions.isEmpty
-                ? Center(child: Text('Belum ada riwayat transaksi'))
-                : ListView.builder(
-                    itemCount: _transactions.length,
-                    itemBuilder: (context, index) {
-                      final transaction = _transactions[index];
-                      return ListTile(
-                        leading: Icon(
-                          transaction.type == 'Masuk'
-                              ? Icons.add
-                              : Icons.remove,
-                          color: transaction.type == 'Masuk'
-                              ? Colors.green
-                              : Colors.red,
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Informasi Detail Item
+            Card(
+              elevation: 4,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.inventory, color: Colors.blueAccent),
+                        SizedBox(width: 10),
+                        Text(
+                          widget.item.name,
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
-                        title: Text(
-                            '${transaction.type} - ${transaction.quantity}'),
-                        subtitle: Text('Tanggal: ${transaction.date}'),
-                        trailing: Text(
-                          'ID: ${transaction.id}',
-                          style: TextStyle(fontSize: 12, color: Colors.grey),
-                        ),
-                      );
-                    },
-                  ),
-          ),
-        ],
+                      ],
+                    ),
+                    SizedBox(height: 8),
+                    Text('Deskripsi: ${widget.item.description}'),
+                    Text('Kategori: ${widget.item.category}'),
+                    Text('Harga: Rp ${widget.item.price}'),
+                    Text('Stok: ${widget.item.stock}'),
+                  ],
+                ),
+              ),
+            ),
+            SizedBox(height: 10),
+
+            // Tombol Tambah Transaksi
+            Center(
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          AddTransactionScreen(item: widget.item),
+                    ),
+                  ).then((_) {
+                    _loadTransactions();
+                  });
+                },
+                icon: Icon(Icons.add, color: Colors.white),
+                label: Text('Tambah Riwayat Transaksi',
+                    style: TextStyle(color: Colors.white)),
+              ),
+            ),
+            SizedBox(height: 10),
+
+            // Riwayat Transaksi
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                'Riwayat Transaksi',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+            ),
+            Expanded(
+              child: _transactions.isEmpty
+                  ? Center(
+                      child: Text(
+                        'Belum ada riwayat transaksi',
+                        style: TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                    )
+                  : ListView.builder(
+                      itemCount: _transactions.length,
+                      itemBuilder: (context, index) {
+                        final transaction = _transactions[index];
+                        return Card(
+                          elevation: 2,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ListTile(
+                            leading: Icon(
+                              transaction.type == 'Masuk'
+                                  ? Icons.download
+                                  : Icons.upload,
+                              color: transaction.type == 'Masuk'
+                                  ? Colors.green
+                                  : Colors.red,
+                            ),
+                            title: Text(
+                              '${transaction.type} - ${transaction.quantity}',
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            subtitle: Text('Tanggal: ${transaction.date}'),
+                            trailing: Text(
+                              'ID: ${transaction.id}',
+                              style:
+                                  TextStyle(fontSize: 12, color: Colors.grey),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -40,12 +40,30 @@ class _AddItemScreenState extends State<AddItemScreen> {
   }
 
   void _pickImage() async {
-    final pickedFile =
-        await ImagePicker().pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() {
-        _imageFile = File(pickedFile.path);
-      });
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Pilih Sumber Gambar'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.camera),
+            child: Text('Kamera'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, ImageSource.gallery),
+            child: Text('Galeri'),
+          ),
+        ],
+      ),
+    );
+
+    if (source != null) {
+      final pickedFile = await ImagePicker().pickImage(source: source);
+      if (pickedFile != null) {
+        setState(() {
+          _imageFile = File(pickedFile.path);
+        });
+      }
     }
   }
 
@@ -82,51 +100,138 @@ class _AddItemScreenState extends State<AddItemScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.item == null ? 'Tambah Barang' : 'Edit Barang'),
+        title: Text(
+          widget.item == null ? 'Tambah Barang' : 'Edit Barang',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.blueAccent,
       ),
-      body: Form(
-        key: _formKey,
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: SingleChildScrollView(
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              TextFormField(
+              // Gambar Barang
+              Center(
+                child: Stack(
+                  children: [
+                    _imageFile == null
+                        ? Container(
+                            height: 200,
+                            width: 200,
+                            decoration: BoxDecoration(
+                              color: Colors.grey[300],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(Icons.image,
+                                size: 60, color: Colors.white70),
+                          )
+                        : ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Image.file(
+                              _imageFile!,
+                              height: 200,
+                              width: 200,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                    Positioned(
+                      bottom: 8,
+                      right: 8,
+                      child: CircleAvatar(
+                        backgroundColor: Colors.blueAccent,
+                        child: IconButton(
+                          icon: Icon(Icons.edit, color: Colors.white),
+                          onPressed: _pickImage,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: 20),
+
+              // Input Nama Barang
+              _buildTextField(
+                label: 'Nama Barang',
                 initialValue: _name,
-                decoration: InputDecoration(labelText: 'Nama Barang'),
                 onSaved: (value) => _name = value!,
                 validator: (value) => value!.isEmpty ? 'Wajib diisi' : null,
               ),
-              TextFormField(
+
+              // Input Deskripsi
+              _buildTextField(
+                label: 'Deskripsi',
                 initialValue: _description,
-                decoration: InputDecoration(labelText: 'Deskripsi'),
                 onSaved: (value) => _description = value!,
               ),
-              TextFormField(
+
+              // Input Kategori
+              _buildTextField(
+                label: 'Kategori',
                 initialValue: _category,
-                decoration: InputDecoration(labelText: 'Kategori'),
                 onSaved: (value) => _category = value!,
               ),
-              TextFormField(
+
+              // Input Harga
+              _buildTextField(
+                label: 'Harga',
                 initialValue: _price == 0 ? '' : _numberFormat.format(_price),
-                decoration: InputDecoration(labelText: 'Harga'),
                 keyboardType: TextInputType.number,
                 onSaved: (value) =>
                     _price = double.parse(value!.replaceAll('.', '')),
                 validator: (value) =>
                     value!.isEmpty ? 'Harga tidak boleh kosong' : null,
               ),
-              _imageFile == null
-                  ? TextButton(
-                      onPressed: _pickImage,
-                      child: Text('Pilih Gambar'),
-                    )
-                  : Image.file(_imageFile!, height: 200),
-              ElevatedButton(
-                onPressed: _saveItem,
-                child: Text('Simpan'),
+
+              SizedBox(height: 20),
+              // Tombol Simpan
+              Center(
+                child: ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueAccent,
+                    padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                  ),
+                  onPressed: _saveItem,
+                  icon: Icon(Icons.save),
+                  label: Text(
+                    'Simpan',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+// Widget Helper untuk TextField
+  Widget _buildTextField({
+    required String label,
+    required String? initialValue,
+    TextInputType keyboardType = TextInputType.text,
+    required FormFieldSetter<String> onSaved,
+    FormFieldValidator<String>? validator,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: TextFormField(
+        initialValue: initialValue,
+        keyboardType: keyboardType,
+        decoration: InputDecoration(
+          labelText: label,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          filled: true,
+          fillColor: Colors.grey[100],
+        ),
+        onSaved: onSaved,
+        validator: validator,
       ),
     );
   }
